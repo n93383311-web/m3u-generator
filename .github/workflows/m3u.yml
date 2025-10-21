@@ -27,8 +27,8 @@ jobs:
       - name: Run generate_m3u.py
         run: python generate_m3u.py
 
-      - name: Upload index.m3u as artifact
-        uses: actions/upload-artifact@v3
+      - name: Upload M3U file
+        uses: actions/upload-artifact@v4
         with:
-          name: index-m3u
-          path: index.m3u
+        name: index-m3u
+        path: index.m3u
