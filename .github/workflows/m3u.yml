@@ -1,31 +1,26 @@
 name: Generate M3U
 
 on:
-  workflow_dispatch:
+  schedule:
+    - cron: "*/30 * * * *" # runs every 30 minutes
+  workflow_dispatch: # allows manual run too
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-
-      - name: Set up Python
+      - uses: actions/checkout@v4
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
-
-      - name: Install dependencies
+          python-version: '3.11'
+      - name: Install Dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install playwright
-          playwright install chromium
-
-      - name: Run M3U generator
+          pip install playwright pyperclip
+          playwright install
+      - name: Run M3U Generator
         run: python generate_m3u.py
-
-      - name: Upload M3U file
+      - name: Upload M3U
         uses: actions/upload-artifact@v4
         with:
           name: index-m3u
