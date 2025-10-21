@@ -2,39 +2,41 @@ name: Generate M3U
 
 on:
   schedule:
-    # Every 30 minutes
-    - cron: '*/30 * * * *'
-  workflow_dispatch:
+    - cron: '*/30 * * * *'  # every 30 minutes
+  workflow_dispatch:  # allow manual run
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write  # required for gh-pages push
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: '3.12'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install playwright
           playwright install
 
-      - name: Run M3U generator
-        run: python main.py
+      - name: Run M3U Generator
+        run: |
+          python main.py
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v6
+        uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: .
+          publish_dir: ./
+          keep_files: true
           force_orphan: true
-          keep_files: false
           commit_message: "Update M3U"
