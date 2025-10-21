@@ -1,42 +1,40 @@
 name: Generate M3U
 
 on:
-  workflow_dispatch:
   schedule:
-    - cron: "*/30 * * * *"  # Every 30 minutes
-
-permissions:
-  contents: write
-  pages: write
-  id-token: write
+    # Every 30 minutes
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.12'
+          python-version: '3.x'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install playwright opencv-python
-          playwright install --with-deps chromium
+          pip install -r requirements.txt
+          playwright install
 
-      - name: Run M3U Generator
+      - name: Run M3U generator
         run: python main.py
 
-      - name: Commit and push to gh-pages
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git checkout -B gh-pages
-          git add index.m3u
-          git commit -m "Update M3U" || echo "No changes to commit"
-          git push -f https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} gh-pages
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v7
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: .
+          force_orphan: true
+          keep_files: false
+          commit_message: "Update M3U"
