@@ -1,4 +1,4 @@
-# generate_m3u.py
+# main.py
 import re
 import time
 from urllib.parse import urlparse
@@ -14,15 +14,19 @@ OUTPUT_FILE = "index.m3u"
 
 def find_m3u_in_requests(page, timeout=20):
     found = {"url": None}
+
     def on_request(request):
         u = request.url
         if "index.m3u8?" in u:
             found["url"] = u
+
     page.on("request", on_request)
+
     def on_response(response):
         u = response.url
         if "index.m3u8?" in u:
             found["url"] = u
+
     page.on("response", on_response)
 
     t0 = time.time()
@@ -34,11 +38,8 @@ def find_m3u_in_requests(page, timeout=20):
 
 def normalize_channel(raw_path):
     raw = raw_path.strip("/")
-    if raw.endswith("-hd"):
-        prefix = "hd-"
-    else:
-        prefix = ""
-    channel_for_url = raw  # keep full raw (so bnt-1-hd remains bnt-1-hd)
+    prefix = "hd-" if raw.endswith("-hd") else ""
+    channel_for_url = raw
     return prefix, channel_for_url, raw
 
 def process_urls(urls):
@@ -75,10 +76,7 @@ def process_urls(urls):
             for cdn_base in CDN_VARIANTS:
                 if extracted.startswith("http"):
                     tail_match = re.search(r'(index\.m3u8\?.+)$', extracted)
-                    if tail_match:
-                        tail = tail_match.group(1)
-                    else:
-                        tail = extracted
+                    tail = tail_match.group(1) if tail_match else extracted
                     final = f"{cdn_base}{prefix}{channel_part}/{tail}"
                 else:
                     final = f"{cdn_base}{prefix}{channel_part}/{extracted}"
