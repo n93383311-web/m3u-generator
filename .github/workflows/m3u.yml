@@ -3,7 +3,7 @@ name: Generate M3U
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 */6 * * *"  # Runs every 6 hours (you can change if you want)
+    - cron: "*/30 * * * *"  # Runs every 30 minutes
 
 jobs:
   build:
