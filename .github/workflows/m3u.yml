@@ -2,26 +2,45 @@ name: Generate M3U
 
 on:
   schedule:
-    - cron: "*/30 * * * *" # runs every 30 minutes
-  workflow_dispatch: # allows manual run too
+    - cron: "*/30 * * * *"  # every 30 minutes
+  workflow_dispatch:       # allows manual run too
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
+      # 1️⃣ Checkout code
       - uses: actions/checkout@v4
+
+      # 2️⃣ Setup Python
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
+
+      # 3️⃣ Install dependencies
       - name: Install Dependencies
         run: |
           pip install playwright pyperclip
           playwright install
+
+      # 4️⃣ Run your M3U generator
       - name: Run M3U Generator
         run: python generate_m3u.py
-      - name: Upload M3U
-        uses: actions/upload-artifact@v4
-        with:
-          name: index-m3u
-          path: index.m3u
+
+      # 5️⃣ Push updated index.m3u to gh-pages
+      - name: Push index.m3u to gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          # switch to gh-pages branch or create it
+          git fetch origin gh-pages
+          git checkout gh-pages || git checkout -b gh-pages
+          # copy generated file
+          cp index.m3u index.m3u
+          git add index.m3u
+          git commit -m "Update index.m3u [skip ci]" || echo "No changes"
+          git push origin gh-pages
