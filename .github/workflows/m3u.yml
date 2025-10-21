@@ -2,37 +2,40 @@ name: Generate M3U
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *"  # Runs every 6 hours (you can change if you want)
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.12'
 
       - name: Install dependencies
         run: |
-          pip install playwright
-          playwright install --with-deps chromium
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4 playwright
+          playwright install --with-deps
 
       - name: Run M3U Generator
-        run: python generate_m3u.py
+        run: python main.py
 
       - name: Commit and push to gh-pages
         run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git fetch origin
-          git checkout gh-pages || git checkout --orphan gh-pages
-          cp index.m3u index.m3u
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git checkout -B gh-pages
           git add index.m3u
+          # Exclude workflow files so GitHub allows the push
+          git reset HEAD .github/workflows/m3u.yml || true
           git commit -m "Update M3U" || echo "No changes to commit"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} gh-pages --force
+          git push -f origin gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
